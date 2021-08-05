@@ -1,0 +1,55 @@
+PSPSDK=$(shell psp-config --pspsdk-path)
+
+PSPAPP=./psp
+DATA=$(PSPAPP)/data
+PSPLIB=$(PSPAPP)/lib
+MZLIB=$(PSPAPP)/libmz
+
+PSP_FW_VERSION=200
+export PSP_FW_VERSION
+
+PSP_APP_NAME=Atari800 PSP
+PSP_APP_VER=4.2.0.0
+
+TARGET=atari800psp
+#BUILD_PRX = 1
+EXTRA_TARGETS=EBOOT.PBP
+PSP_EBOOT_TITLE=$(PSP_APP_NAME) $(PSP_APP_VER)
+PSP_EBOOT_ICON=$(DATA)/atari800-icon.png
+
+BUILD_APP=afile.o antic.o artifact.o atari.o binload.o cartridge.o cassette.o compfile.o \
+          cfg.o colours.o colours_pal.o colours_ntsc.o colours_external.o cpu.o crc32.o devices.o \
+          esc.o gtia.o img_tape.o log.o memory.o monitor.o pbi.o pia.o \
+          pokey.o rtime.o sio.o sysrom.o util.o statesav.o ui.o input.o screen.o \
+          pokeysnd.o sndsave.o mzpokeysnd.o remez.o ui_basic.o \
+          pbi_mio.o pbi_bb.o pbi_proto80.o pbi_scsi.o pbi_xld.o \
+          votrax.o votraxsnd.o cycle_map.o roms/altirra_5200_os.o roms/altirra_basic.o roms/altirraos_800.o roms/altirraos_xl.o #sound.o
+BUILD_PSPAPP=atari_psp.o $(PSPAPP)/menu.o $(PSPAPP)/emulate.o
+
+OBJS=$(BUILD_APP) $(BUILD_PSPAPP)
+
+BASE_DEFS=-DPSP \
+  -DPSP_APP_VER=\"$(PSP_APP_VER)\" \
+	-DPSP_APP_NAME="\"$(PSP_APP_NAME)\""
+DEBUG_CFLAGS=-ggdb -gdwarf-2
+RELEASE_CFLAGS=-O3
+CFLAGS=-G0 $(RELEASE_CFLAGS) -Wall -Wextra $(BASE_DEFS) $(DEFINES)
+CXXFLAGS=$(CFLAGS) -fno-exceptions -fno-rtti
+ASFLAGS=$(CFLAGS)
+INCDIR=$(PSPLIB) $(PSPAPP)
+LIBDIR=. $(PSPLIB) $(MZLIB)
+LIBS=-lminizip -lpsplib -lpng -lz -lm -lc -lpspgu -lpsppower -lpspaudio -lpsprtc \
+     -lpspwlan -lpspnet_adhoc -lpspnet_adhocctl -lpspnet_adhocmatching -lpspdebug
+
+all: build_libs
+clean: clean_libs
+
+include $(PSPSDK)/lib/build.mak
+
+build_libs:
+	cd $(PSPLIB) ; $(MAKE)
+	cd $(MZLIB) ; $(MAKE) -f Makefile.psp
+clean_libs:
+	cd $(PSPLIB) ; $(MAKE) clean
+	cd $(MZLIB) ; $(MAKE) -f Makefile.psp clean
+
